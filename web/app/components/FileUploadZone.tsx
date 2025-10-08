@@ -26,7 +26,9 @@ export default function FileUploadZone({
       onDragLeave={onDragLeave}
       onClick={() => fileInputRef.current?.click()}
       className={`
-        relative overflow-hidden rounded-2xl border-2 border-dashed p-12
+        relative overflow-hidden rounded-2xl border-2 border-dashed p-6
+        max-w-md w-full min-h-[505px]
+        flex items-center justify-center
         transition-all duration-300 cursor-pointer group
         ${isDragging
           ? 'border-blue-500 bg-blue-50 dark:bg-blue-950/20 scale-[1.02]'

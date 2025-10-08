@@ -8,8 +8,11 @@ export async function POST(request: NextRequest) {
 
     const data = await request.formData();
     const file: File | null = data.get('audio') as unknown as File;
+    const pages = data.get('pages') as string || '1';
+    const notes = data.get('notes') as string || '';
 
     console.log('Файл получен:', file ? `${file.name} (${file.size} bytes)` : 'null');
+    console.log('Параметры:', { pages, notes });
 
     if (!file) {
       console.log('Ошибка: файл не найден');
@@ -42,6 +45,8 @@ export async function POST(request: NextRequest) {
 
     const backendFormData = new FormData();
     backendFormData.append('file', file);
+    backendFormData.append('pages', pages);
+    backendFormData.append('notes', notes);
 
     const backendResponse = await fetch(`${BACKEND_URL}/audio`, {
       method: 'POST',

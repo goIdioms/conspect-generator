@@ -8,6 +8,8 @@ export function useFileUpload() {
   const [progress, setProgress] = useState<number>(0);
   const [currentStep, setCurrentStep] = useState<string>('');
   const [isDragging, setIsDragging] = useState(false);
+  const [pages, setPages] = useState<number>(1);
+  const [notes, setNotes] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -40,6 +42,8 @@ export function useFileUpload() {
 
       const formData = new FormData();
       formData.append('audio', file);
+      formData.append('pages', pages.toString());
+      formData.append('notes', notes);
 
       setCurrentStep('Обработка аудио...');
       setProgress(30);
@@ -133,6 +137,10 @@ export function useFileUpload() {
     progress,
     currentStep,
     isDragging,
+    pages,
+    setPages,
+    notes,
+    setNotes,
     fileInputRef,
     handleFileSelect,
     handleUpload,

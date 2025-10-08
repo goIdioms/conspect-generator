@@ -7,6 +7,8 @@ import UploadButton from './components/UploadButton';
 import ProgressBar from './components/ProgressBar';
 import StatusMessage from './components/StatusMessage';
 import PDFDownload from './components/PDFDownload';
+import Settings from './components/Settings';
+import { Box } from './ui';
 
 export default function Home() {
   const {
@@ -17,6 +19,10 @@ export default function Home() {
     progress,
     currentStep,
     isDragging,
+    pages,
+    setPages,
+    notes,
+    setNotes,
     fileInputRef,
     handleFileSelect,
     handleUpload,
@@ -28,10 +34,17 @@ export default function Home() {
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-12 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900">
-      <div className="w-full max-w-2xl">
+      <div>
         <Header />
 
-        <FileUploadZone
+        <Box className='w-full justify-center items-start h-full'>
+          <Settings
+            pages={pages}
+            setPages={setPages}
+            notes={notes}
+            setNotes={setNotes}
+          />
+          <FileUploadZone
           file={file}
           isDragging={isDragging}
           fileInputRef={fileInputRef}
@@ -39,7 +52,9 @@ export default function Home() {
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onFileSelect={handleFileSelect}
-        />
+          />
+        </Box>
+
 
         {file && (
           <UploadButton uploading={uploading} onClick={handleUpload} />

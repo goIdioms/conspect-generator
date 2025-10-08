@@ -38,6 +38,11 @@ func handleAudio(w http.ResponseWriter, r *http.Request) {
 	}
 	defer file.Close()
 
+	pages := r.FormValue("pages")
+	notes := r.FormValue("notes")
+
+	log.Printf("Processing audio with params: pages=%s, notes=%s", pages, notes)
+
 	tmpFile, err := os.CreateTemp("", "audio-*.mp3")
 	if err != nil {
 		http.Error(w, "failed to create temp file", http.StatusInternalServerError)
@@ -51,7 +56,7 @@ func handleAudio(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	summary, err := summarizeAudio(r.Context(), tmpFile.Name())
+	summary, err := summarizeAudio(r.Context(), tmpFile.Name(), pages, notes)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -67,7 +72,7 @@ func handleAudio(w http.ResponseWriter, r *http.Request) {
 	w.Write(pdfBytes)
 }
 
-func summarizeAudio(ctx context.Context, filePath string) (string, error) {
+func summarizeAudio(ctx context.Context, filePath, pages, notes string) (string, error) {
 	resp, err := openai.NewClient(os.Getenv("OPENAI_API_KEY")).CreateTranscription(ctx, openai.AudioRequest{
 		Model:    openai.Whisper1,
 		FilePath: filePath,
@@ -77,10 +82,13 @@ func summarizeAudio(ctx context.Context, filePath string) (string, error) {
 	}
 	text := resp.Text
 
+	// Формируем промпт с учётом параметров
+	prompt := buildSummaryPrompt(text, pages, notes)
+
 	summaryResp, err := openai.NewClient(os.Getenv("OPENAI_API_KEY")).CreateChatCompletion(ctx, openai.ChatCompletionRequest{
 		Model: openai.GPT4oMini,
 		Messages: []openai.ChatCompletionMessage{
-			{Role: openai.ChatMessageRoleUser, Content: "Суммируй текст: " + text},
+			{Role: openai.ChatMessageRoleUser, Content: prompt},
 		},
 	})
 	if err != nil {
@@ -90,6 +98,22 @@ func summarizeAudio(ctx context.Context, filePath string) (string, error) {
 		return "", nil
 	}
 	return summaryResp.Choices[0].Message.Content, nil
+}
+
+func buildSummaryPrompt(text, pages, notes string) string {
+	prompt := "Создай подробный конспект на основе следующей транскрипции аудио.\n\n"
+
+	if pages != "" && pages != "0" {
+		prompt += fmt.Sprintf("Количество страниц конспекта: %s.\n", pages)
+	}
+
+	if notes != "" {
+		prompt += fmt.Sprintf("Особые примечания: %s\n", notes)
+	}
+
+	prompt += "\nТранскрипция:\n" + text
+
+	return prompt
 }
 
 func createPDF(textContent string) ([]byte, error) {

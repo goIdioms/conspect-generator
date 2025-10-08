@@ -1,3 +1,5 @@
+import Card from '../ui/Card';
+
 interface ProgressBarProps {
   progress: number;
   currentStep: string;
@@ -5,7 +7,7 @@ interface ProgressBarProps {
 
 export default function ProgressBar({ progress, currentStep }: ProgressBarProps) {
   return (
-    <div className="mt-6 p-6 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 animate-[slideUp_0.4s_ease-out]">
+    <Card variant="bordered" className="mt-6 p-6 animate-[slideUp_0.4s_ease-out]">
       <div className="flex justify-between items-center mb-3">
         <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{currentStep}</span>
         <span className="text-sm font-bold text-blue-600 dark:text-blue-400">{progress}%</span>
@@ -21,6 +23,6 @@ export default function ProgressBar({ progress, currentStep }: ProgressBarProps)
       <p className="mt-4 text-xs text-slate-500 dark:text-slate-400 text-center">
         Подготовка → Транскрипция → Суммаризация → PDF
       </p>
-    </div>
+    </Card>
   );
 }
