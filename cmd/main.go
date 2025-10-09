@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
 	"os"
 
@@ -19,7 +18,7 @@ func run() {
 	r.SetupMiddlewares()
 	r.SetupRoutes()
 
-	fmt.Println("Starting server on port", os.Getenv("HTTP_ADDR"))
+	r.Logger.Info("Starting server on port", os.Getenv("HTTP_ADDR"))
 	http.ListenAndServe(os.Getenv("HTTP_ADDR"), r.Router)
 }
 

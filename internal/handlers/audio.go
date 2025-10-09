@@ -5,34 +5,53 @@ import (
 	"net/http"
 	"os"
 
+	c "github.com/goIdioms/conspect-generator/internal/constants"
 	"github.com/goIdioms/conspect-generator/internal/services"
+	"github.com/goIdioms/conspect-generator/internal/validators"
+	"github.com/sirupsen/logrus"
 )
-
 
 type AudioHandler struct {
 	pdfService           *services.PDFService
 	transcriptionService *services.TranscriptionService
+	logger               *logrus.Logger
 }
 
-func NewAudioHandler() *AudioHandler {
+func NewAudioHandler(logger *logrus.Logger) *AudioHandler {
 	return &AudioHandler{
 		pdfService:           services.NewPDFService(),
 		transcriptionService: services.NewTranscriptionService(),
+		logger:               logger,
 	}
 }
 
 func (h *AudioHandler) Handle(w http.ResponseWriter, r *http.Request) {
-	file, _, err := r.FormFile(fileField)
+	file, header, err := r.FormFile(c.FormFieldFile)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		h.logger.Warnf("Failed to get file: %v", err)
+		http.Error(w, "Файл не найден в запросе", http.StatusBadRequest)
 		return
 	}
 	defer file.Close()
 
-	pages := r.FormValue(pagesField)
-	notes := r.FormValue(notesField)
+	if err := validators.ValidateAudioFile(file, header); err != nil {
+		h.logger.Warnf("File validation failed: %v", err)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
-	tmpFile, err := os.CreateTemp("", tempFileName)
+	pages := r.FormValue(c.FormFieldPages)
+	notes := r.FormValue(c.FormFieldNotes)
+
+	if err := validators.ValidateRequestParams(pages, notes); err != nil {
+		h.logger.Warnf("Params validation failed: %v", err)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	h.logger.Infof("Processing audio: file=%s, size=%d, pages=%s", header.Filename, header.Size, pages)
+
+	tmpFile, err := os.CreateTemp("", c.TempFilePattern)
 	if err != nil {
 		http.Error(w, "failed to create temp file", http.StatusInternalServerError)
 		return
@@ -56,7 +75,7 @@ func (h *AudioHandler) Handle(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	w.Header().Set(contentType, applicationPdf)
-	w.Header().Set(contentDisposition, attachment+"; "+filename+"="+notesPdf)
+	w.Header().Set(c.HeaderContentType, c.ContentTypePDF)
+	w.Header().Set(c.HeaderContentDisposition, c.AttachmentPrefix+"; "+header.Filename+"="+c.OutputPDFFileName)
 	w.Write(pdfBytes)
 }
