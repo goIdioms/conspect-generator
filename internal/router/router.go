@@ -9,9 +9,11 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	c "github.com/goIdioms/conspect-generator/internal/constants"
+	"github.com/goIdioms/conspect-generator/internal/config"
+	"github.com/goIdioms/conspect-generator/internal/constants"
 	"github.com/goIdioms/conspect-generator/internal/handlers"
 	custommw "github.com/goIdioms/conspect-generator/internal/middleware"
+	"github.com/goIdioms/conspect-generator/internal/services"
 	"github.com/sirupsen/logrus"
 )
 
@@ -22,11 +24,24 @@ type Router struct {
 	RateLimitWindow string
 	MaxBodySize     string
 	AudioHandler    *handlers.AudioHandler
+	AuthHandler     *handlers.AuthHandler
 }
 
 func NewRouter() *Router {
 	logger := logrus.New()
 	logger.SetFormatter(&logrus.JSONFormatter{})
+
+	oauthCfg := &config.OAuthConfig{
+		Google: config.GoogleOAuthConfig{
+			ClientID:     os.Getenv("GOOGLE_CLIENT_ID"),
+			ClientSecret: os.Getenv("GOOGLE_CLIENT_SECRET"),
+			RedirectURL:  os.Getenv("GOOGLE_REDIRECT_URL"),
+			Scopes:       constants.DefaultOAuthScopes,
+		},
+	}
+
+	authService := services.NewAuthService(oauthCfg, logger)
+	frontendURL := os.Getenv("FRONTEND_URL")
 
 	return &Router{
 		Router:          chi.NewRouter(),
@@ -35,6 +50,7 @@ func NewRouter() *Router {
 		RateLimitWindow: os.Getenv("RATE_LIMIT_WINDOW"),
 		MaxBodySize:     os.Getenv("MAX_BODY_SIZE"),
 		AudioHandler:    handlers.NewAudioHandler(logger),
+		AuthHandler:     handlers.NewAuthHandler(authService, logger, frontendURL),
 	}
 }
 
@@ -43,6 +59,9 @@ func (r *Router) SetupRoutes() {
 		w.Write([]byte("Healthy"))
 	})
 	r.Router.Post("/audio", r.AudioHandler.Handle)
+
+	r.Router.Get("/auth/google/login", r.AuthHandler.GoogleLogin)
+	r.Router.Get("/auth/google/callback", r.AuthHandler.GoogleCallback)
 }
 
 func (r *Router) SetupMiddlewares() {
@@ -58,13 +77,13 @@ func (r *Router) SetupMiddlewares() {
 	rateLimit, err := strconv.Atoi(r.RateLimit)
 	if err != nil {
 		r.Logger.Warnf("Invalid RATE_LIMIT_REQUESTS value: %v, using default 10", err)
-		rateLimit = c.RateLimitRequests
+		rateLimit = constants.RateLimitRequests
 	}
 
 	rateLimitWindow, err := time.ParseDuration(r.RateLimitWindow)
 	if err != nil {
 		r.Logger.Warnf("Invalid RATE_LIMIT_WINDOW value: %v, using default 1m", err)
-		rateLimitWindow = c.RateLimitWindow
+		rateLimitWindow = constants.RateLimitWindow
 	}
 
 	rateLimiter := custommw.NewRateLimiter(rateLimit, rateLimitWindow, r.Logger)
@@ -73,7 +92,7 @@ func (r *Router) SetupMiddlewares() {
 	maxBodySize, err := strconv.ParseInt(r.MaxBodySize, 10, 64)
 	if err != nil {
 		r.Logger.Warnf("Invalid MAX_BODY_SIZE value: %v, using default 110MB", err)
-		maxBodySize = c.MaxBodySize
+		maxBodySize = constants.MaxBodySize
 	}
 
 	r.Router.Use(custommw.MaxBodySize(maxBodySize))
