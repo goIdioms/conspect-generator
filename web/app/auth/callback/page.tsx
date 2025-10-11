@@ -60,12 +60,12 @@ export default function GoogleCallback() {
   }, [router]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900">
+    <div className="min-h-screen flex items-center justify-center px-4 bg-black">
       <div className="text-center">
         {status === 'loading' && (
           <div className="animate-pulse">
-            <div className="w-16 h-16 mx-auto mb-4 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
-            <p className="text-slate-700 dark:text-slate-300 text-xl">
+            <div className="w-16 h-16 mx-auto mb-4 border-4 border-green-500 border-t-transparent rounded-full animate-spin" />
+            <p className="text-green-200 text-xl font-light">
               Обработка авторизации...
             </p>
           </div>
@@ -74,14 +74,14 @@ export default function GoogleCallback() {
         {status === 'success' && (
           <div className="animate-[fadeIn_0.5s_ease-out]">
             <div className="w-16 h-16 mx-auto mb-4 bg-green-500 rounded-full flex items-center justify-center">
-              <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-10 h-10 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
             </div>
-            <p className="text-green-600 dark:text-green-400 text-xl font-semibold">
+            <p className="text-green-400 text-xl font-light">
               Успешно авторизованы!
             </p>
-            <p className="text-slate-600 dark:text-slate-400 mt-2">
+            <p className="text-green-200 mt-2 font-light">
               Перенаправление на главную страницу...
             </p>
           </div>
@@ -89,18 +89,18 @@ export default function GoogleCallback() {
 
         {status === 'error' && (
           <div className="animate-[fadeIn_0.5s_ease-out]">
-            <div className="w-16 h-16 mx-auto mb-4 bg-red-500 rounded-full flex items-center justify-center">
+            <div className="w-16 h-16 mx-auto mb-4 bg-red-600 rounded-full flex items-center justify-center">
               <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </div>
-            <p className="text-red-600 dark:text-red-400 text-xl font-semibold">
+            <p className="text-red-400 text-xl font-light">
               Ошибка авторизации
             </p>
-            <p className="text-slate-600 dark:text-slate-400 mt-2">
+            <p className="text-green-200 mt-2 font-light">
               {error}
             </p>
-            <p className="text-slate-500 dark:text-slate-500 text-sm mt-4">
+            <p className="text-green-300 text-sm mt-4 font-light">
               Перенаправление на главную страницу...
             </p>
           </div>

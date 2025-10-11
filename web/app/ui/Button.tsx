@@ -16,13 +16,13 @@ export default function Button({
   disabled,
   ...props
 }: ButtonProps) {
-  const baseStyles = 'rounded-xl font-medium transition-all duration-300 transform disabled:cursor-not-allowed';
+  const baseStyles = 'rounded-lg font-light transition-all duration-300 transform disabled:cursor-not-allowed backdrop-blur-sm';
 
   const variantStyles = {
-    primary: 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl',
-    secondary: 'bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-900 dark:text-white',
-    success: 'bg-green-600 hover:bg-green-700 text-white shadow-md hover:shadow-lg',
-    danger: 'bg-red-600 hover:bg-red-700 text-white shadow-md hover:shadow-lg',
+    primary: 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-400 hover:to-green-500 text-black shadow-lg shadow-green-500/30 hover:shadow-xl hover:shadow-green-500/50',
+    secondary: 'bg-green-900/20 border border-green-700 hover:bg-green-800/30 text-green-300 hover:text-green-200 backdrop-blur-md',
+    success: 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-400 hover:to-green-500 text-black shadow-lg shadow-green-500/30 hover:shadow-xl',
+    danger: 'bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white shadow-lg shadow-red-500/30',
   };
 
   const sizeStyles = {

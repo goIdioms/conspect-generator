@@ -8,19 +8,20 @@ export default function Input({ label, className = '', ...props }: InputProps) {
   return (
     <div className="w-full">
       {label && (
-        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+        <label className="block text-sm font-light text-green-200 mb-2">
           {label}
         </label>
       )}
       <input
         className={`
-          w-full px-4 py-3 rounded-xl
-          bg-white dark:bg-slate-800
-          border border-slate-300 dark:border-slate-600
-          text-slate-900 dark:text-white
-          placeholder:text-slate-400 dark:placeholder:text-slate-500
-          focus:outline-none focus:ring-2 focus:ring-blue-500
-          transition-all duration-200
+          w-full px-4 py-3 rounded-lg
+          bg-green-900/10 backdrop-blur-md
+          border border-green-800/30
+          text-white
+          placeholder:text-green-300/50
+          focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500
+          hover:border-green-700/50
+          transition-all duration-300
           ${className}
         `}
         {...props}
