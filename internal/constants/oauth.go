@@ -1,5 +1,7 @@
 package constants
 
+var DefaultOAuthScopes = []string{"profile", "email"}
+
 const (
 	GoogleOAuthScopes = "profile email"
 
@@ -13,5 +15,3 @@ const (
 
 	GoogleUserInfoURL = "https://www.googleapis.com/oauth2/v2/userinfo"
 )
-
-var DefaultOAuthScopes = []string{"profile", "email"}
