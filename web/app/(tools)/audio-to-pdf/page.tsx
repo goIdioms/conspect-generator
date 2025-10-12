@@ -1,14 +1,13 @@
 'use client';
 
-import { useFileUpload } from '../../hooks/useFileUpload';
-import Navbar from '../../components/Navbar';
-import FileUploadZone from '../../components/FileUploadZone';
-import UploadButton from '../../components/UploadButton';
-import ProgressBar from '../../components/ProgressBar';
-import StatusMessage from '../../components/StatusMessage';
-import PDFDownload from '../../components/PDFDownload';
-import Settings from '../../components/Settings';
-import { Box } from '../../ui';
+import { useFileUpload } from '@/app/hooks/useFileUpload';
+import Navbar from '@/components/Navbar';
+import FileUploadZone from '@/components/FileUploadZone';
+import UploadButton from '@/components/UploadButton';
+import ProgressBar from '@/components/ProgressBar';
+import StatusMessage from '@/components/StatusMessage';
+import PDFDownload from '@/components/PDFDownload';
+import Settings from '@/components/Settings';
 
 export default function AudioToPDF() {
   const {
@@ -42,16 +41,27 @@ export default function AudioToPDF() {
       <Navbar />
       <div className="flex items-center justify-center px-4 py-24 relative z-10">
         <div>
-        <div className="text-center mb-12 animate-[fadeIn_0.6s_ease-out]">
-          <h1 className="text-5xl md:text-6xl font-display font-light mb-4 text-transparent bg-clip-text bg-gradient-to-r from-white via-green-100 to-white tracking-wide">
-            Audio → PDF
-          </h1>
-          <p className="text-green-200 text-lg font-light">
-            Транскрипция и суммаризация в один клик
+        <div className="text-center mb-16">
+          <div className="relative mb-8">
+            <h1 className="text-6xl md:text-7xl font-display font-black text-foreground tracking-tighter leading-none">
+              Audio
+            </h1>
+            <div className="flex items-center justify-center gap-4 mt-4">
+              <div className="h-px bg-gradient-to-r from-transparent via-primary to-transparent flex-1 max-w-24"></div>
+              <span className="text-2xl font-display font-thin text-primary">→</span>
+              <div className="h-px bg-gradient-to-r from-transparent via-primary to-transparent flex-1 max-w-24"></div>
+            </div>
+            <h1 className="text-6xl md:text-7xl font-display font-black text-foreground tracking-tighter leading-none mt-4">
+              PDF
+            </h1>
+          </div>
+          <p className="text-xl text-muted-foreground font-light max-w-2xl mx-auto leading-relaxed">
+            Превратите любую аудиозапись в профессиональный конспект
+            <span className="font-semibold text-foreground">за несколько минут</span>
           </p>
         </div>
 
-        <Box className='w-full justify-center items-start h-full'>
+        <div className='w-full flex justify-center items-start h-full gap-8'>
           <Settings
             pages={pages}
             setPages={setPages}
@@ -67,7 +77,7 @@ export default function AudioToPDF() {
             onDragLeave={handleDragLeave}
             onFileSelect={handleFileSelect}
           />
-        </Box>
+        </div>
 
         {file && (
           <UploadButton uploading={uploading} onClick={handleUpload} />

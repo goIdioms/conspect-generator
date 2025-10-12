@@ -2,7 +2,7 @@
 
 import { useRouter, usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { AUTH_CONFIG } from '../constants/auth';
+import { AUTH_CONFIG } from '@/app/constants/auth';
 
 interface GoogleUser {
   id: string;

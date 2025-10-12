@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Button } from '../ui';
-import { AUTH_CONFIG } from '../constants/auth';
+import { Button } from '@/components/ui/button';
+import { AUTH_CONFIG } from '@/app/constants/auth';
 
 interface GoogleUser {
   id: string;

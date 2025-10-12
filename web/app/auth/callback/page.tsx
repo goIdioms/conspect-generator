@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { AUTH_CONFIG } from '../../constants/auth';
+import { AUTH_CONFIG } from '@/app/constants/auth';
 
 export default function GoogleCallback() {
   const router = useRouter();
