@@ -44,6 +44,7 @@ export default function Navbar() {
   const navItems = [
     { label: 'Главная', path: '/' },
     { label: 'Audio → PDF', path: '/audio-to-pdf' },
+    { label: 'Конспект по теме', path: '/topic-to-pdf' },
   ];
 
   return (
@@ -99,12 +100,20 @@ export default function Navbar() {
                 </button>
               </div>
             ) : (
+              <div className="flex items-center gap-3">
               <button
-                onClick={handleLogin}
-                className="px-6 py-2 rounded bg-green-500 text-black hover:bg-green-400 font-light transition-all"
+                onClick={() => router.push('/login')}
+                className="px-6 py-2 rounded bg-green-900/30 border border-green-700 text-green-300 hover:bg-green-800/30 font-light transition-all"
               >
                 Войти
               </button>
+              <button
+                onClick={() => router.push('/register')}
+                className="px-6 py-2 rounded bg-green-500 text-black hover:bg-green-400 font-light transition-all"
+              >
+                Регистрация
+              </button>
+              </div>
             )}
 
             <button

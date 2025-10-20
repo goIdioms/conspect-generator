@@ -5,4 +5,6 @@ export { default as StatusMessage } from './StatusMessage';
 export { default as PDFDownload } from './PDFDownload';
 export { default as Settings } from './Settings';
 export { default as GoogleAuth } from './GoogleAuth';
+export { default as Login } from './Login';
 export { default as Navbar } from './Navbar';
+export { default as Register } from './Register';
