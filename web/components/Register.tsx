@@ -40,7 +40,7 @@ export default function Register() {
         <div className="absolute bottom-1/4 -right-48 w-96 h-96 bg-primary/3 rounded-full blur-3xl animate-pulse" style={{animationDelay: '2s'}}></div>
       </div>
 
-      <div className="relative z-10 w-full max-w-md mx-auto px-6">
+      <div className="relative z-10 w-full max-w-xl mx-auto px-6">
         <Card className="bg-card/50 backdrop-blur-xl border-primary/20">
           <CardHeader className="space-y-4 text-center pb-8">
             <div className="flex justify-center mb-4">
