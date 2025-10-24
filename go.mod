@@ -4,6 +4,7 @@ go 1.25
 
 require (
 	github.com/go-chi/chi/v5 v5.2.3
+	github.com/lib/pq v1.10.9
 	github.com/sashabaranov/go-openai v1.41.2
 )
 
@@ -18,5 +19,6 @@ require (
 	cloud.google.com/go/compute/metadata v0.3.0 // indirect
 	github.com/phpdave11/gofpdi v1.0.14-0.20211212211723-1f10f9844311 // indirect
 	github.com/pkg/errors v0.8.1 // indirect
-	golang.org/x/sys v0.0.0-20220715151400-c0bba94af5f8 // indirect
+	github.com/stretchr/testify v1.8.1 // indirect
+	golang.org/x/sys v0.15.0 // indirect
 )

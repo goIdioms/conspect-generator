@@ -7,6 +7,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/goIdioms/conspect-generator/internal/config"
 	"github.com/goIdioms/conspect-generator/internal/constants"
+	"github.com/goIdioms/conspect-generator/internal/database"
 	"github.com/goIdioms/conspect-generator/internal/handlers"
 	"github.com/goIdioms/conspect-generator/internal/services"
 	"github.com/sirupsen/logrus"
@@ -20,11 +21,18 @@ type Router struct {
 	MaxBodySize     string
 	AudioHandler    *handlers.AudioHandler
 	AuthHandler     *handlers.AuthHandler
+	Database        *database.Database
 }
 
 func NewRouter() *Router {
 	logger := logrus.New()
 	logger.SetFormatter(&logrus.JSONFormatter{})
+
+	dbCfg := config.NewDBConfig()
+	db, err := database.New(dbCfg, logger)
+	if err != nil {
+		logger.Fatalf("Failed to initialize database: %v", err)
+	}
 
 	oauthCfg := &config.OAuthConfig{
 		Google: config.GoogleOAuthConfig{
@@ -45,7 +53,8 @@ func NewRouter() *Router {
 		RateLimitWindow: os.Getenv("RATE_LIMIT_WINDOW"),
 		MaxBodySize:     os.Getenv("MAX_BODY_SIZE"),
 		AudioHandler:    handlers.NewAudioHandler(logger),
-		AuthHandler:     handlers.NewAuthHandler(authService, logger, frontendURL),
+		AuthHandler:     handlers.NewAuthHandler(authService, db, logger, frontendURL),
+		Database:        db,
 	}
 }
 
@@ -57,4 +66,13 @@ func (r *Router) SetupRoutes() {
 
 	r.Router.Get("/auth/google/login", r.AuthHandler.GoogleLogin)
 	r.Router.Get("/auth/google/callback", r.AuthHandler.GoogleCallback)
+	r.Router.Get("/auth/me", r.AuthHandler.GetCurrentUser)
+	r.Router.Post("/auth/logout", r.AuthHandler.Logout)
+}
+
+func (r *Router) Close() error {
+	if r.Database != nil {
+		return r.Database.Close()
+	}
+	return nil
 }
