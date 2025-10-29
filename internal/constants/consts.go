@@ -56,10 +56,8 @@ const (
 	RateLimitRequests = 10
 	RateLimitWindow   = 1 * time.Minute
 
-	// Cookie constants
-	CookieSessionName = "session_token"
-	CookieMaxAge      = 24 * 60 * 60
-	CookieHttpOnly    = true
-	CookieSecure      = false
-	CookieSameSite    = "Lax"
+	CookieMaxAge   = 24 * 60 * 60
+	CookieHttpOnly = true
+	CookieSecure   = false
+	CookieSameSite = "Lax"
 )

@@ -9,8 +9,8 @@ import (
 )
 
 const (
-	MaxFileSize      = 100 * 1024 * 1024 // 100MB
-	MaxAudioDuration = 2 * 60 * 60       // 2 часа
+	MaxFileSize      = 100 * 1024 * 1024
+	MaxAudioDuration = 2 * 60 * 60
 )
 
 var AllowedMimeTypes = map[string]bool{

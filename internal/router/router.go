@@ -5,10 +5,12 @@ import (
 	"os"
 
 	"github.com/go-chi/chi/v5"
+	sessionApp "github.com/goIdioms/conspect-generator/internal/application/session"
+	userApp "github.com/goIdioms/conspect-generator/internal/application/user"
 	"github.com/goIdioms/conspect-generator/internal/config"
 	"github.com/goIdioms/conspect-generator/internal/constants"
-	"github.com/goIdioms/conspect-generator/internal/database"
 	"github.com/goIdioms/conspect-generator/internal/handlers"
+	"github.com/goIdioms/conspect-generator/internal/infra/database"
 	"github.com/goIdioms/conspect-generator/internal/services"
 	"github.com/sirupsen/logrus"
 )
@@ -43,6 +45,12 @@ func NewRouter() *Router {
 		},
 	}
 
+	userRepo := database.NewUserRepository(db.GetDB())
+	sessionRepo := database.NewSessionRepository(db.GetDB())
+
+	userService := userApp.NewService(userRepo, logger)
+	sessionService := sessionApp.NewService(sessionRepo, logger)
+
 	authService := services.NewAuthService(oauthCfg, logger)
 	frontendURL := os.Getenv("FRONTEND_URL")
 
@@ -53,7 +61,7 @@ func NewRouter() *Router {
 		RateLimitWindow: os.Getenv("RATE_LIMIT_WINDOW"),
 		MaxBodySize:     os.Getenv("MAX_BODY_SIZE"),
 		AudioHandler:    handlers.NewAudioHandler(logger),
-		AuthHandler:     handlers.NewAuthHandler(authService, db, logger, frontendURL),
+		AuthHandler:     handlers.NewAuthHandler(authService, userService, sessionService, logger, frontendURL),
 		Database:        db,
 	}
 }

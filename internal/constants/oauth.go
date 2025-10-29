@@ -1,10 +1,10 @@
 package constants
 
-var DefaultOAuthScopes = []string{"profile", "email"}
+var DefaultOAuthScopes = []string{
+	"https://www.googleapis.com/auth/userinfo.email",
+	"https://www.googleapis.com/auth/userinfo.profile",
+}
 
 const (
-	GoogleOAuthScopes = "profile email"
-	CookieStateName   = "oauth_state"
-	StateLength       = 16
 	GoogleUserInfoURL = "https://www.googleapis.com/oauth2/v2/userinfo"
 )

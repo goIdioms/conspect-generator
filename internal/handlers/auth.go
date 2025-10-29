@@ -1,51 +1,58 @@
 package handlers
 
 import (
-	"crypto/rand"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
 	"time"
 
+	sessionApp "github.com/goIdioms/conspect-generator/internal/application/session"
+	userApp "github.com/goIdioms/conspect-generator/internal/application/user"
 	"github.com/goIdioms/conspect-generator/internal/constants"
-	"github.com/goIdioms/conspect-generator/internal/database"
+	"github.com/goIdioms/conspect-generator/internal/domain/auth"
 	"github.com/goIdioms/conspect-generator/internal/services"
 	"github.com/sirupsen/logrus"
 )
 
 type AuthHandler struct {
-	authService *services.AuthService
-	database    *database.Database
-	logger      *logrus.Logger
-	frontendURL string
+	authService    *services.AuthService
+	userService    *userApp.Service
+	sessionService *sessionApp.Service
+	logger         *logrus.Logger
+	frontendURL    string
 }
 
-func NewAuthHandler(authService *services.AuthService, db *database.Database, logger *logrus.Logger, frontendURL string) *AuthHandler {
+func NewAuthHandler(
+	authService *services.AuthService,
+	userService *userApp.Service,
+	sessionService *sessionApp.Service,
+	logger *logrus.Logger,
+	frontendURL string,
+) *AuthHandler {
 	return &AuthHandler{
-		authService: authService,
-		database:    db,
-		logger:      logger,
-		frontendURL: frontendURL,
+		authService:    authService,
+		userService:    userService,
+		sessionService: sessionService,
+		logger:         logger,
+		frontendURL:    frontendURL,
 	}
 }
 
 func (h *AuthHandler) GoogleLogin(w http.ResponseWriter, r *http.Request) {
-	state := generateState()
+	state := auth.GenerateState()
 
-	cookie := &http.Cookie{
+	http.SetCookie(w, &http.Cookie{
 		Name:     constants.CookieStateName,
-		Value:    state,
+		Value:    state.String(),
 		MaxAge:   constants.CookieMaxAge,
 		HttpOnly: constants.CookieHttpOnly,
 		Secure:   constants.CookieSecure,
 		SameSite: http.SameSiteLaxMode,
 		Path:     "/",
-	}
-	http.SetCookie(w, cookie)
+	})
 
-	authURL := h.authService.GetAuthURL(state)
+	authURL := h.authService.GetAuthURL(state.String())
 	http.Redirect(w, r, authURL, http.StatusTemporaryRedirect)
 }
 
@@ -86,29 +93,66 @@ func (h *AuthHandler) GoogleCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Сохраняем или обновляем пользователя в базе данных
-	dbUser, err := h.database.CreateOrUpdateUser(userInfo)
+	dbUser, err := h.userService.CreateOrUpdateUser(r.Context(), userInfo)
 	if err != nil {
 		h.logger.Errorf("Failed to save user to database: %v", err)
 		h.redirectToFrontendWithError(w, r, "Failed to save user data")
 		return
 	}
 
-	// Создаем сессию пользователя
-	sessionToken := generateSessionToken()
-	expiresAt := time.Now().Add(24 * time.Hour) // Сессия на 24 часа
-
-	_, err = h.database.CreateSession(dbUser.ID, sessionToken, expiresAt)
+	session, err := h.sessionService.CreateSession(r.Context(), dbUser.ID, constants.SessionDuration)
 	if err != nil {
 		h.logger.Errorf("Failed to create user session: %v", err)
 		h.redirectToFrontendWithError(w, r, "Failed to create session")
 		return
 	}
 
-	// Устанавливаем куки с токеном сессии
-	h.setSessionCookie(w, sessionToken, expiresAt)
+	h.setSessionCookie(w, session.Token.String(), session.ExpiresAt)
 	h.clearStateCookie(w)
-	h.redirectToFrontendWithUser(w, r, userInfo, sessionToken)
+	h.redirectToFrontendWithUser(w, r, userInfo, session.Token.String())
+}
+
+func (h *AuthHandler) GetCurrentUser(w http.ResponseWriter, r *http.Request) {
+	sessionCookie, err := r.Cookie(constants.CookieSessionName)
+	if err != nil {
+		http.Error(w, "Session cookie not found", http.StatusUnauthorized)
+		return
+	}
+
+	session, err := h.sessionService.ValidateSession(r.Context(), sessionCookie.Value)
+	if err != nil {
+		h.logger.Errorf("Failed to validate session: %v", err)
+		http.Error(w, "Invalid session", http.StatusUnauthorized)
+		return
+	}
+
+	user, err := h.userService.GetUserByID(r.Context(), session.UserID)
+	if err != nil {
+		h.logger.Errorf("Failed to get user: %v", err)
+		http.Error(w, "User not found", http.StatusNotFound)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(user)
+}
+
+func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
+	sessionCookie, err := r.Cookie(constants.CookieSessionName)
+	if err != nil {
+		http.Error(w, "Session cookie not found", http.StatusBadRequest)
+		return
+	}
+
+	if err := h.sessionService.DeleteSession(r.Context(), sessionCookie.Value); err != nil {
+		h.logger.Errorf("Failed to delete session: %v", err)
+		http.Error(w, "Failed to logout", http.StatusInternalServerError)
+		return
+	}
+
+	h.clearSessionCookie(w)
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("Logged out successfully"))
 }
 
 func (h *AuthHandler) redirectToFrontendWithUser(w http.ResponseWriter, r *http.Request, user *services.GoogleUser, token string) {
@@ -141,21 +185,22 @@ func (h *AuthHandler) validateState(r *http.Request, receivedState string) bool 
 	if err != nil {
 		return false
 	}
-	return cookie.Value == receivedState
-}
 
-func (h *AuthHandler) clearStateCookie(w http.ResponseWriter) {
-	cookie := &http.Cookie{
-		Name:   constants.CookieStateName,
-		Value:  "",
-		MaxAge: -1,
-		Path:   "/",
+	expected, err := auth.NewState(cookie.Value)
+	if err != nil {
+		return false
 	}
-	http.SetCookie(w, cookie)
+
+	received, err := auth.NewState(receivedState)
+	if err != nil {
+		return false
+	}
+
+	return expected.Equals(received)
 }
 
 func (h *AuthHandler) setSessionCookie(w http.ResponseWriter, token string, expiresAt time.Time) {
-	cookie := &http.Cookie{
+	http.SetCookie(w, &http.Cookie{
 		Name:     constants.CookieSessionName,
 		Value:    token,
 		Expires:  expiresAt,
@@ -163,12 +208,11 @@ func (h *AuthHandler) setSessionCookie(w http.ResponseWriter, token string, expi
 		Secure:   constants.CookieSecure,
 		SameSite: http.SameSiteLaxMode,
 		Path:     "/",
-	}
-	http.SetCookie(w, cookie)
+	})
 }
 
 func (h *AuthHandler) clearSessionCookie(w http.ResponseWriter) {
-	cookie := &http.Cookie{
+	http.SetCookie(w, &http.Cookie{
 		Name:     constants.CookieSessionName,
 		Value:    "",
 		MaxAge:   -1,
@@ -176,65 +220,14 @@ func (h *AuthHandler) clearSessionCookie(w http.ResponseWriter) {
 		Secure:   constants.CookieSecure,
 		SameSite: http.SameSiteLaxMode,
 		Path:     "/",
-	}
-	http.SetCookie(w, cookie)
+	})
 }
 
-func generateState() string {
-	b := make([]byte, constants.StateLength)
-	rand.Read(b)
-	return base64.URLEncoding.EncodeToString(b)
-}
-
-func generateSessionToken() string {
-	b := make([]byte, 32) // 32 байта для токена сессии
-	rand.Read(b)
-	return base64.URLEncoding.EncodeToString(b)
-}
-
-// GetCurrentUser возвращает информацию о текущем пользователе по куки сессии
-func (h *AuthHandler) GetCurrentUser(w http.ResponseWriter, r *http.Request) {
-	sessionCookie, err := r.Cookie(constants.CookieSessionName)
-	if err != nil {
-		http.Error(w, "Session cookie not found", http.StatusUnauthorized)
-		return
-	}
-
-	session, err := h.database.GetSessionByToken(sessionCookie.Value)
-	if err != nil {
-		h.logger.Errorf("Failed to get session: %v", err)
-		http.Error(w, "Invalid session", http.StatusUnauthorized)
-		return
-	}
-
-	user, err := h.database.GetUserByID(session.UserID)
-	if err != nil {
-		h.logger.Errorf("Failed to get user: %v", err)
-		http.Error(w, "User not found", http.StatusNotFound)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(user)
-}
-
-// Logout завершает сессию пользователя
-func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
-	sessionCookie, err := r.Cookie(constants.CookieSessionName)
-	if err != nil {
-		http.Error(w, "Session cookie not found", http.StatusBadRequest)
-		return
-	}
-
-	// Удаляем сессию из базы данных
-	if err := h.database.DeleteSession(sessionCookie.Value); err != nil {
-		h.logger.Errorf("Failed to delete session: %v", err)
-		http.Error(w, "Failed to logout", http.StatusInternalServerError)
-		return
-	}
-
-	// Удаляем куки
-	h.clearSessionCookie(w)
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Logged out successfully"))
+func (h *AuthHandler) clearStateCookie(w http.ResponseWriter) {
+	http.SetCookie(w, &http.Cookie{
+		Name:   constants.CookieStateName,
+		Value:  "",
+		MaxAge: -1,
+		Path:   "/",
+	})
 }
