@@ -90,7 +90,6 @@ export function useFileUpload() {
       setCurrentStep('');
       setProgress(0);
       setUploadStatus('Ошибка при загрузке');
-      console.error(error);
     } finally {
       setUploading(false);
     }

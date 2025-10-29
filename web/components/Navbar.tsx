@@ -3,14 +3,7 @@
 import { useRouter, usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { AUTH_CONFIG } from '@/app/constants/auth';
-
-interface GoogleUser {
-  id: string;
-  email: string;
-  name: string;
-  picture: string;
-  verified_email: boolean;
-}
+import { GoogleUser } from '@/types/user';
 
 export default function Navbar() {
   const router = useRouter();

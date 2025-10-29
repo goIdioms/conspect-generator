@@ -11,6 +11,7 @@ import (
 	userApp "github.com/goIdioms/conspect-generator/internal/application/user"
 	"github.com/goIdioms/conspect-generator/internal/constants"
 	"github.com/goIdioms/conspect-generator/internal/domain/auth"
+	"github.com/goIdioms/conspect-generator/internal/dto"
 	"github.com/goIdioms/conspect-generator/internal/services"
 	"github.com/sirupsen/logrus"
 )
@@ -133,8 +134,9 @@ func (h *AuthHandler) GetCurrentUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	response := dto.NewUserResponse(user)
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(user)
+	json.NewEncoder(w).Encode(response)
 }
 
 func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {

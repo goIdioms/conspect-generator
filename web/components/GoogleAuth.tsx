@@ -3,19 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { AUTH_CONFIG } from '@/app/constants/auth';
-
-interface GoogleUser {
-  id: string;
-  email: string;
-  name: string;
-  picture: string;
-  verified_email: boolean;
-}
-
-interface AuthResponse {
-  user: GoogleUser;
-  access_token: string;
-}
+import { GoogleUser } from '@/types/user';
 
 export default function GoogleAuth() {
   const [user, setUser] = useState<GoogleUser | null>(null);
